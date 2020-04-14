@@ -1,0 +1,24 @@
+
+server:
+  port: 8102
+
+spring:
+  datasource:
+   url: jdbc:mysql://localhost:3306/wait?useSSL=false&allowMultiQueries=true
+   username: root
+   password: 123123
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: pass
+    timeout: 60000
+
+#spring.jpa.show-sql=true
+#spring.jpa.hibernate.ddl-auto=update
+
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:/mybatis/*Mapper.xml
+  type-aliases-package: cn.wait.demo.entity

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.wait.demo.mapper.UserMapper">
+    <select id="findByUsername" resultType="cn.wait.demo.entity.User">
+    select id, password, role, username from user where username = #{username}
+    </select>
+    <insert id="saveUser" parameterType="cn.wait.demo.entity.User"  >
+      <selectKey resultType="java.lang.Integer" keyColumn="id"  order="AFTER" keyProperty="id">
+        select LAST_INSERT_ID() as id
+      </selectKey>
+        insert into user(id,username,password) values (#{id},#{username},#{password})
+    </insert>
+    <insert id="saveUserRole">
+        insert into user_role(uid,rid) values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.uid},#{item.rid})
+        </foreach>
+    </insert>
+    <select id="findRoleByUser" resultType="java.lang.String">
+        select role_name from role where role_id in(select rid from user_role where uid =#{id})
+    </select>
+</mapper>

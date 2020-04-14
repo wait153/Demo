@@ -1,0 +1,41 @@
+package cn.wait.demo.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+
+@RestController
+@RequestMapping("/tasks")
+public class TaskController {
+
+    @Autowired
+    RedisTemplate<String, Object> redisTemplate;
+
+    @GetMapping("/list")
+    public String listTasks(HttpServletRequest request){
+        System.out.println(SecurityContextHolder.getContext().getAuthentication());
+//        SecurityContextUtils.getJwtUser();
+        return "任务列表";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/add")
+    public String newTasks(){
+        return "创建了一个新的任务";
+    }
+
+    @PutMapping("/{taskId}")
+    public String updateTasks(@PathVariable("taskId")Integer id){
+        return "更新了一下id为:"+id+"的任务";
+    }
+
+    @DeleteMapping("/{taskId}")
+    public String deleteTasks(@PathVariable("taskId")Integer id){
+        return "删除了id为:"+id+"的任务";
+    }
+}
