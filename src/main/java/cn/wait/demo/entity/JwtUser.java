@@ -95,18 +95,14 @@ public class JwtUser implements UserDetails {
             return userName.equals(((User)o).getUsername());
         }
         if(o instanceof JwtUser){
-            return userName.equals(((JwtUser)o).getUsername());
+            return this.userName.equals(((JwtUser)o).getUsername());
         }else{
-            JwtUser jwtUser = (JwtUser) o;
-            return id.equals(jwtUser.id) &&
-                    userName.equals(jwtUser.userName) &&
-                    passWord.equals(jwtUser.passWord) &&
-                    authorities.equals(jwtUser.authorities);
+            return o.equals(userName);
         }
     }
 
     @Override
     public int hashCode() {
-        return userName.hashCode();
+        return this.userName.hashCode();
     }
 }

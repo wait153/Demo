@@ -7,8 +7,6 @@ import cn.wait.demo.utils.JwtTokenUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.util.StringUtils;
 
@@ -49,6 +47,9 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
             if (null == user || StringUtils.isEmpty(String.valueOf(redisTemplate.opsForValue().get(TokenConst.TOKEN_PREFIX + user.getId()))) || expiration) {
                 throw new TokenException("请您重新登录");
             }
+            //刷新过期时间
+            JwtTokenUtils.refreshToken(token);
+            redisTemplate.expire(TokenConst.TOKEN_PREFIX + user.getId(),TokenConst.JWT_TOKEN_EXPIRATION, TimeUnit.SECONDS);
 
         } catch (Exception e) {
             //返回json形式的错误信息

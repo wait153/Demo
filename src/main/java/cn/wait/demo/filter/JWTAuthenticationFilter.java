@@ -2,7 +2,6 @@ package cn.wait.demo.filter;
 
 import cn.wait.demo.consts.TokenConst;
 import cn.wait.demo.entity.JwtUser;
-import cn.wait.demo.exception.TokenException;
 import cn.wait.demo.model.LoginUser;
 import cn.wait.demo.utils.JwtTokenUtils;
 import cn.wait.demo.utils.ResponseUtils;
@@ -16,12 +15,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 
-import javax.annotation.Resource;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -45,11 +41,8 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         this.redisTemplate = redisTemplate;
         this.sessionRegistry = sessionRegistry;
         super.setFilterProcessesUrl("/auth/login");
-    }
-
-    @Override
-    public void setSessionAuthenticationStrategy(SessionAuthenticationStrategy sessionStrategy) {
-        super.setSessionAuthenticationStrategy(new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry));
+        ConcurrentSessionControlAuthenticationStrategy strategy = new ConcurrentSessionControlAuthenticationStrategy(sessionRegistry);
+        this.setSessionAuthenticationStrategy(strategy);
     }
 
     @Override
@@ -63,8 +56,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 LoginUser loginUser = new ObjectMapper().readValue(request.getInputStream(), LoginUser.class);
                 rememberMe.set(loginUser.getRememberMe());
                 authRequest = new UsernamePasswordAuthenticationToken(loginUser.getUsername(), loginUser.getPassword(), new ArrayList<>());
-
+                if(sessionRegistry.getAllPrincipals().contains(loginUser.getUsername())){
+                    sessionRegistry.removeSessionInformation(request.getRequestedSessionId());
+                }
                 sessionRegistry.registerNewSession(request.getSession().getId(),authRequest.getPrincipal());
+
                 return authenticationManager.authenticate(authRequest);
             } catch (IOException e) {
                 return null;

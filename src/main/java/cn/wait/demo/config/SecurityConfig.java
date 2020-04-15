@@ -8,7 +8,6 @@ import cn.wait.demo.handler.MyLogoutHandler;
 import cn.wait.demo.handler.MyLogoutSuccessHandler;
 import cn.wait.demo.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
@@ -17,14 +16,11 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.session.ConcurrentSessionFilter;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.session.SessionInformationExpiredStrategy;
-import org.springframework.security.web.session.SimpleRedirectSessionInformationExpiredStrategy;
 import org.springframework.web.cors.CorsUtils;
 
 import javax.annotation.Resource;
@@ -83,8 +79,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .addFilter(new JWTAuthenticationFilter(authenticationManager(),redisTemplate,sessionRegistry()))
                 .addFilter(new JWTAuthorizationFilter(authenticationManager(),redisTemplate))
-                .addFilterAt(new ConcurrentSessionFilter(sessionRegistry,sessionInformationExpiredStrategy()),ConcurrentSessionFilter.class)
-                //addFilterAt(Filter A,Filter B)//在指定的FilterB的位置添加过滤器A
+                .addFilter(createConccurencyFilter())
                 .exceptionHandling()//允许配置错误处理
                 .authenticationEntryPoint(new JWTAuthenticationEntryPoint())//认证异常处理
                 .accessDeniedHandler(new JWTAccessDeniedHandler())//访问权限异常处理
@@ -93,18 +88,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement()//会话设置
                 .maximumSessions(1)//单用户登录
                 .sessionRegistry(sessionRegistry())
-                .expiredSessionStrategy(new SessionInformationExpiredStrategyImpl())//多用户登录异常处理
+                .maxSessionsPreventsLogin(false)
                 ;
     }
+
     @Bean
     SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }
+
     @Bean
-    public static ServletListenerRegistrationBean httpSessionEventPublisher() {	//(5)
-        return new ServletListenerRegistrationBean(new HttpSessionEventPublisher());
+    ConcurrentSessionFilter createConccurencyFilter() {
+        SessionInformationExpiredStrategy expireStrategy = new SessionInformationExpiredStrategyImpl();
+        SessionRegistry sessionRegistry = sessionRegistry();
+        return new ConcurrentSessionFilter(sessionRegistry, expireStrategy);
     }
-    private SessionInformationExpiredStrategy sessionInformationExpiredStrategy() {
-        return new SimpleRedirectSessionInformationExpiredStrategy("/login");
-    }
+
 }
